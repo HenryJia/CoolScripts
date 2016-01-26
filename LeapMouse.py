@@ -36,11 +36,11 @@ class MouseListener(Leap.Listener):
                     self.clicked = True
             else:
                 self.clicked = False
-                if rightmost_hand.grab_strength >= smoother(1) * k:
+                if rightmost_hand.grab_strength - rightmost_hand.pinch_strength >= smoother(1) * k:
                     self.cursor.click_down()
                     #self.velocity = 0.0125
                     self.velocity = 0.05
-                elif rightmost_hand.grab_strength < smoother(1) * k:
+                elif rightmost_hand.grab_strength - rightmost_hand.pinch_strength < smoother(1) * k:
                     self.cursor.click_up()
                     self.velocity = 0.05
 
