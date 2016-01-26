@@ -26,21 +26,24 @@ class MouseListener(Leap.Listener):
         if not frame.hands.is_empty:  #Make sure we have some hands to work with
             rightmost_hand = max(frame.hands, key=lambda hand: hand.palm_position.x)
             cur_pos = rightmost_hand.palm_velocity
-            print cur_pos, '; ', rightmost_hand.pinch_strength, '; ', rightmost_hand.grab_strength
+            print cur_pos, '; ', rightmost_hand.pinch_strength, '; ', rightmost_hand.grab_strength, '; ', rightmost_hand.palm_normal.yaw
+
+            #if abs(rightmost_hand.palm_normal.yaw) > 2:
+                #self.cursor.scroll(round(smoother(rightmost_hand.palm_velocity[0]) * self.velocity * 0.1, 0), round(smoother(rightmost_hand.palm_velocity[1]) * -self.velocity * 0.1, 0))
+            #else:
             self.cursor.move(round(smoother(rightmost_hand.palm_velocity[0]) * self.velocity, 0), round(smoother(rightmost_hand.palm_velocity[1]) * -self.velocity, 0))
 
-            k = 1 / (math.log(1 + math.e) - math.log(2))
-            if rightmost_hand.pinch_strength >= smoother(0.95) * k:
+            if rightmost_hand.pinch_strength >= 0.95:
                 if self.clicked == False:
                     self.cursor.click()
                     self.clicked = True
             else:
                 self.clicked = False
-                if rightmost_hand.grab_strength - rightmost_hand.pinch_strength >= smoother(1) * k:
+                if rightmost_hand.grab_strength >= 1:
                     self.cursor.click_down()
                     #self.velocity = 0.0125
                     self.velocity = 0.05
-                elif rightmost_hand.grab_strength - rightmost_hand.pinch_strength < smoother(1) * k:
+                elif rightmost_hand.grab_strength < 1:
                     self.cursor.click_up()
                     self.velocity = 0.05
 
