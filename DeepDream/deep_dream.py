@@ -32,9 +32,9 @@ model = vgg16.VGG16(input_tensor = input_img, weights = 'imagenet', include_top 
 
 print model.summary()
 
-out = model(input_img)
-
-loss = -K.sum(out ** 2)
+loss = K.sum(input_img ** 2) / (3 * 600 * 600)
+#loss -= 1.1e-4 * K.sum(model.layers[9].output ** 2)
+loss -= K.sum(model.layers[-1].output ** 2)
 
 grads = K.gradients(loss, input_img)
 
@@ -52,14 +52,21 @@ print 'Try Dreaming :D'
 
 img_final = img_flat
 for i in xrange(5):
+    random_jitter = 2 * (np.random.random((3 * 600 * 600, )) - 0.5)
+    img_final += random_jitter
+
     img_final, min_val, info = fmin_l_bfgs_b(loss_fmin_fn, img_final, fprime = grads_fmin_fn, maxfun = 7)
-    img_final_save = np.transpose(np.reshape(img_final, (3, 600, 600)), (1, 2, 0))
-    img_final_save[:, :, 0] -= 103.939
-    img_final_save[:, :, 1] -= 116.779
-    img_final_save[:, :, 2] -= 123.68
+    img_final_save = np.transpose(np.reshape(np.copy(img_final - random_jitter), (3, 600, 600)), (1, 2, 0))
+    img_final_save[:, :, 0] += 103.939
+    img_final_save[:, :, 1] += 116.779
+    img_final_save[:, :, 2] += 123.68
+
+    #img_final_save[:, :, 0] = (img_final_save[:, :, 0] - np.min(img_final_save[:, :, 0])) / (np.max(img_final_save[:, :, 0]) - np.min(img_final_save[:, :, 0])) * 255.0
+    #img_final_save[:, :, 1] = (img_final_save[:, :, 1] - np.min(img_final_save[:, :, 1])) / (np.max(img_final_save[:, :, 1]) - np.min(img_final_save[:, :, 1])) * 255.0
+    #img_final_save[:, :, 2] = (img_final_save[:, :, 2] - np.min(img_final_save[:, :, 2])) / (np.max(img_final_save[:, :, 2]) - np.min(img_final_save[:, :, 2])) * 255.0
     # 'BGR' -> 'RGB'
     img_final_save = img_final_save[:, :, ::-1]
-    img_final_save = img_final_save.astype(np.uint8)
+    img_final_save = np.clip(img_final_save, 0, 255).astype(np.uint8)
     plt.figure(i)
     plt.imshow(img_final_save)
     imsave('dream' + str(i) + '.jpg', img_final_save)
